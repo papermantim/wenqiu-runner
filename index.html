@@ -1,9 +1,44 @@
 <!doctype html><html lang="zh-CN"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>稳球前行 · 试玩</title>
 <style>*{box-sizing:border-box}body{margin:0;background:#f6f3df;color:#20251f;font-family:system-ui,sans-serif}main{height:100dvh;display:flex;flex-direction:column}.scene{position:relative;flex:1;min-height:0}canvas{width:100%;height:100%;display:block}.hud{position:absolute;top:16px;left:16px;right:16px;display:flex;justify-content:space-between;gap:8px;pointer-events:none}.stats,.tools{display:flex;gap:8px;align-items:center}.card,button{border:2px solid #20251f;border-radius:14px;background:#f6f3df;padding:10px 14px}button{font:inherit;font-weight:700;cursor:pointer;touch-action:none;pointer-events:auto}button:disabled{opacity:.4;cursor:default}.card{font-size:13px}.card strong{display:block;font-size:23px}#overlay{position:absolute;inset:0;background:#f6f3df66;display:flex;align-items:center;justify-content:center;padding:18px}.panel{max-width:380px;background:#f6f3df;border:2px solid;border-radius:18px;padding:26px;box-shadow:5px 5px #20251f}.panel h1{font-size:34px;margin:0 0 16px}.panel p{line-height:1.7}.primary{background:#55bca5;width:100%;min-height:48px}.controls{display:flex;gap:12px;padding:14px 16px max(14px,env(safe-area-inset-bottom));border-top:2px solid;justify-content:center}.controls button{flex:1;max-width:180px;min-height:66px}.hint{font-size:12px;color:#666}#overlay[hidden]{display:none}@media(max-width:500px){.hud{left:8px;right:8px;top:8px}.card, .tools button{padding:8px}.card strong{font-size:19px}.panel{padding:20px}}
-.card,button,.panel{border-radius:5px 12px 6px 9px;box-shadow:3px 3px #20251f}.controls button:nth-child(1){background:#c3b4dc}.controls button:nth-child(3){background:#f39bbf}.primary{background:#bdda4e}.panel h1{letter-spacing:3px}.hint{line-height:1.6}</style><main><div class="scene"><canvas id="game"></canvas><div class="hud"><div class="stats"><div class="card">路程<strong id="distance">0 米</strong><span id="score">0 分</span></div><div class="card">最远<strong id="best">0 米</strong><span id="combo">稳住木板</span></div></div><div class="tools"><button id="mute" aria-label="切换声音">声音 开</button><button id="pause">暂停</button></div></div><div id="overlay"><div class="panel"><h1 id="title">稳球前行</h1><p id="message">一边跑跳躲过障碍，一边倾斜木板，让球保持平衡。</p><button class="primary" id="action">开始走</button><p class="hint">A / D 或方向键控球；空格轻点小跳、长按高跳。手机可同时按住控球和跳跃按钮。</p><p class="hint">P / Esc 暂停 · M 静音</p></div></div></div><div class="controls"><button data-control="left">← 往左</button><button data-control="jump" style="background:#55bca5">↑ 跳</button><button data-control="right">往右 →</button></div></main>
+.card,button,.panel{border-radius:5px 12px 6px 9px;box-shadow:3px 3px #20251f}.controls button:nth-child(1){background:#c3b4dc}.controls button:nth-child(3){background:#f39bbf}.primary{background:#bdda4e}.panel h1{letter-spacing:3px}.hint{line-height:1.6}html{overscroll-behavior:none}main{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}button{appearance:none;-webkit-appearance:none;color:#20251f;-webkit-text-fill-color:#20251f;-webkit-tap-highlight-color:transparent}canvas,.controls{touch-action:none}button:active:not(:disabled){transform:translate(2px,2px);box-shadow:1px 1px #20251f}</style><main><div class="scene"><canvas id="game"></canvas><div class="hud"><div class="stats"><div class="card">路程<strong id="distance">0 米</strong><span id="score">0 分</span></div><div class="card">最远<strong id="best">0 米</strong><span id="combo">稳住木板</span></div></div><div class="tools"><button id="mute" aria-label="切换声音">声音 开</button><button id="pause">暂停</button></div></div><div id="overlay"><div class="panel"><h1 id="title">稳球前行</h1><p id="message">一边跑跳躲过障碍，一边倾斜木板，让球保持平衡。</p><button class="primary" id="action">开始走</button><p class="hint">A / D 或方向键控球；空格轻点小跳、长按高跳。手机可同时按住控球和跳跃按钮。</p><p class="hint">P / Esc 暂停 · M 静音</p></div></div></div><div class="controls"><button data-control="left">← 往左</button><button data-control="jump" style="background:#55bca5">↑ 跳</button><button data-control="right">往右 →</button></div></main>
 <script type="module">
 import {BalanceGame} from './engine.js';
-const $=id=>document.getElementById(id);let state;const controls=[...document.querySelectorAll('[data-control]')];
-const game=new BalanceGame($('game'),hud=>{state=hud;$('distance').textContent=hud.meters+' 米';$('score').textContent=hud.score+' 分';$('best').textContent=hud.best+' 米';$('combo').textContent=hud.combo?'连击 ×'+hud.combo:'稳住木板';$('mute').textContent=hud.muted?'声音 关':'声音 开';$('pause').disabled=!['play','fall'].includes(hud.phase);$('pause').textContent=hud.paused?'继续':'暂停';controls.forEach(b=>b.disabled=hud.phase!=='play'||hud.paused);$('overlay').hidden=!hud.paused&&['play','fall'].includes(hud.phase);$('title').textContent=hud.paused?'休息一下':hud.phase==='dead'?'再走一程':'稳球前行';$('message').textContent=hud.paused?'准备好后，点击继续游戏。':hud.phase==='dead'?(hud.reason==='crash'?'撞上了障碍。':'球从木板边沿滚落了。')+' 跑了 '+hud.meters+' 米，获得 '+hud.score+' 分。':'一边跑跳躲过障碍，一边倾斜木板，让球保持平衡。';$('action').textContent=hud.paused?'继续游戏':hud.phase==='dead'?'再走一程':'开始走';});
+const $=id=>document.getElementById(id);let state;let assetsReady=false;const controls=[...document.querySelectorAll('[data-control]')];
+document.querySelector('main').addEventListener('contextmenu',e=>e.preventDefault());
+document.querySelector('main').addEventListener('selectstart',e=>e.preventDefault());
+const game=new BalanceGame($('game'),hud=>{if(!assetsReady)return;state=hud;$('distance').textContent=hud.meters+' 米';$('score').textContent=hud.score+' 分';$('best').textContent=hud.best+' 米';$('combo').textContent=hud.combo?'连击 ×'+hud.combo:'稳住木板';$('mute').textContent=hud.muted?'声音 关':'声音 开';$('pause').disabled=!['play','fall'].includes(hud.phase);$('pause').textContent=hud.paused?'继续':'暂停';controls.forEach(b=>b.disabled=hud.phase!=='play'||hud.paused);$('overlay').hidden=!hud.paused&&['play','fall'].includes(hud.phase);$('title').textContent=hud.paused?'休息一下':hud.phase==='dead'?'再走一程':'稳球前行';$('message').textContent=hud.paused?'准备好后，点击继续游戏。':hud.phase==='dead'?(hud.reason==='crash'?'撞上了障碍。':'球从木板边沿滚落了。')+' 跑了 '+hud.meters+' 米，获得 '+hud.score+' 分。':'一边跑跳躲过障碍，一边倾斜木板，让球保持平衡。';$('action').textContent=hud.paused?'继续游戏':hud.phase==='dead'?'再走一程':'开始走';});
+const startGame=game.start.bind(game);game.start=()=>{if(assetsReady)startGame();};
+$('game').style.visibility='hidden';
+$('action').disabled=true;
+$('pause').disabled=true;
+controls.forEach(b=>b.disabled=true);
+$('message').textContent='正在准备手绘场景…';
+$('action').textContent='加载中 0 / 4';
+async function prepareArt(){
+  $('action').disabled=true;
+  let loaded=0;
+  const images=[game.heroArt,game.propsArt,game.groundArt,game.forestArt];
+  try{
+    await Promise.all(images.map(async img=>{
+      if(img.complete&&!img.naturalWidth){const url=new URL(img.src);url.searchParams.set('retry',Date.now());img.src=url.href;}
+      await Promise.race([img.decode(),new Promise((_,reject)=>setTimeout(()=>reject(new Error('timeout')),30000))]);
+      if(!img.naturalWidth)throw new Error('image');
+      $('action').textContent='加载中 '+(++loaded)+' / 4';
+    }));
+    game.heroFrames=game.atlasFrames(game.heroArt,3,2);
+    game.propFrames=game.atlasFrames(game.propsArt,4,2);
+    assetsReady=true;
+    $('game').style.visibility='visible';
+    $('action').disabled=false;
+    $('action').onclick=()=>state.paused?game.togglePause():game.start();
+    game.emit();
+  }catch{
+    $('message').textContent='场景图片暂未加载完整，请点击重试。';
+    $('action').textContent='重新加载';
+    $('action').disabled=false;
+    $('action').onclick=prepareArt;
+  }
+}
+prepareArt();
 $('action').onclick=()=>state.paused?game.togglePause():game.start();$('pause').onclick=()=>game.togglePause();$('mute').onclick=()=>game.toggleMute();controls.forEach(b=>{b.onpointerdown=e=>{e.preventDefault();b.setPointerCapture(e.pointerId);game.setPointer(b.dataset.control,true)};for(const name of ['pointerup','pointercancel','lostpointercapture'])b.addEventListener(name,()=>game.setPointer(b.dataset.control,false));});window.addEventListener('pagehide',()=>game.dispose());
 </script></html>
